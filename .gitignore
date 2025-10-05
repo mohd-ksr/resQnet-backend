@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# Environment files
+.env
+
+# Logs
+logs/
+*.log
+
+# OS junk
+.DS_Store
+
+# Build output
+dist/
+coverage/
+
+# Local dev files
+.nodemon.json
