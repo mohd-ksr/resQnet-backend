@@ -48,9 +48,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Placeholder for future routers (auth, reports, volunteers, etc.)
-// e.g. const authRoutes = require('./routes/authRoutes');
-// app.use('/api/auth', authRoutes);
+// ✅ Test routes for unified response helper
+const { successResponse, errorResponse } = require('./utils/response');
+const asyncHandler = require('./utils/asyncHandler');
+const ApiError = require('./utils/errors');
+
+// ✅ test success
+app.get('/api/test/success', (req, res) => {
+  return successResponse(res, "Success route working!", { name: "Roy", project: "ResQNet" });
+});
+
+// ✅ test error (direct)
+app.get('/api/test/error', (req, res) => {
+  return errorResponse(res, 400, "Bad Request - just a test");
+});
+
+// ✅ test with asyncHandler + ApiError
+app.get('/api/test/exception', asyncHandler(async (req, res) => {
+  throw new ApiError(500, "Simulated server crash 😅");
+}));
 
 // 404 fallback
 app.use((req, res) => {
@@ -60,6 +76,17 @@ app.use((req, res) => {
   });
 });
 
-// Note: centralized error handler middleware will be added in PART 6
 
+// 🧩 ✅ TEMPORARY GLOBAL ERROR HANDLER
+// (To show JSON instead of HTML when async errors are thrown)
+app.use((err, req, res, next) => {
+  console.error('Error:', err.message);
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
+});
+
+
+// Export app
 module.exports = app;

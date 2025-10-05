@@ -1,3 +1,5 @@
+
+
 /**
  * src/server.js
  * Entry point. Loads env, initializes DB, starts Express server.
@@ -8,6 +10,7 @@ require('dotenv').config();
 const http = require('http');
 const app = require('./app');
 const connectDB = require('./config/db');
+const logger = require('./utils/logger'); // ✅ Winston logger
 
 const PORT = process.env.PORT || 4000;
 
@@ -18,34 +21,37 @@ const PORT = process.env.PORT || 4000;
     const server = http.createServer(app);
 
     server.listen(PORT, () => {
-      // Use console here; later phases will replace with Winston logger
-      console.log(`ResQNet API listening on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+      logger.info(`🚀 ResQNet API listening on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
     });
 
-    // Graceful shutdown
+    // Graceful shutdown handler
     const shutdown = (signal) => {
-      console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+      logger.warn(`\nReceived ${signal}. Shutting down gracefully...`);
+
       server.close(() => {
-        console.log('HTTP server closed.');
+        logger.info('🛑 HTTP server closed.');
+
         // Close mongoose connection
         const mongoose = require('mongoose');
         mongoose.connection.close(false, () => {
-          console.log('MongoDB connection closed.');
+          logger.info('🗃️ MongoDB connection closed.');
           process.exit(0);
         });
       });
 
-      // If still not closed in 10s, force exit
+      // Force exit if shutdown takes too long
       setTimeout(() => {
-        console.error('Forcing shutdown.');
+        logger.error('⚠️ Forced shutdown due to timeout.');
         process.exit(1);
       }, 10000).unref();
     };
 
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
+
   } catch (err) {
-    console.error('Failed to start server:', err);
+    logger.error(`❌ Failed to start server: ${err.message}`);
     process.exit(1);
   }
 })();
+
