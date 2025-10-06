@@ -13,6 +13,16 @@ const {
   verifyRefreshToken
 } = require("../utils/jwt");
 const { successResponse } = require("../utils/response");
+const { uploadToCloudinary } = require("../services/cloudinaryService");
+
+
+exports.updateProfileImage = asyncHandler(async (req, res) => {
+  if (!req.file) throw new ApiError(400, "No image uploaded");
+  const imageUrl = await uploadToCloudinary(req.file.path, "profile_images");
+  req.user.profileImage = imageUrl;
+  await req.user.save();
+  return successResponse(res, "Profile image updated successfully", { imageUrl });
+});
 
 const generateAccessAndRefreshToken = async (user) => {
   const accessToken = signAccessToken({ _id: user._id, role: user.role });

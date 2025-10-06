@@ -1,4 +1,5 @@
 /**
+ * src/controllers/volunteerController.js
  * Handles volunteer registration, profile updates and listing.
  */
 
@@ -6,24 +7,37 @@ const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/errors");
 const { successResponse } = require("../utils/response");
+const { uploadToCloudinary } = require("../services/cloudinaryService");
 
-// 🧩 1️⃣ Upgrade user → volunteer
+// 🧩 1️⃣ Upgrade user → volunteer (with Cloudinary ID proof upload)
 exports.registerAsVolunteer = asyncHandler(async (req, res) => {
-  const { skills, availability, radiusKm, idProofType, idProofUrl } = req.body;
+  const { skills, availability, radiusKm, idProofType } = req.body;
 
-  if (!skills || !radiusKm || !idProofType || !idProofUrl)
-    throw new ApiError(400, "Missing volunteer profile fields");
+  // Ensure essential data
+  if (!skills || !radiusKm || !idProofType)
+    throw new ApiError(400, "Missing required volunteer profile fields");
 
   const user = await User.findById(req.user._id);
   if (!user) throw new ApiError(404, "User not found");
 
+  // Ensure ID proof file uploaded
+  if (!req.file) throw new ApiError(400, "ID proof image is required");
+
+  // Upload file to Cloudinary (folder: id_proofs)
+  const idProofUrl = await uploadToCloudinary(req.file.path, "id_proofs");
+
+  // Update user data
   user.role = "volunteer";
   user.volunteerProfile = {
     skills,
     availability: availability ?? true,
     radiusKm,
     verified: false,
-    idProof: { type: idProofType, documentUrl: idProofUrl, verified: false },
+    idProof: {
+      type: idProofType,
+      documentUrl: idProofUrl,
+      verified: false
+    },
     totalCasesResolved: 0,
     averageRating: 0,
     badges: [],
@@ -31,6 +45,7 @@ exports.registerAsVolunteer = asyncHandler(async (req, res) => {
   };
 
   await user.save();
+
   return successResponse(res, "Upgraded to volunteer successfully", user);
 });
 

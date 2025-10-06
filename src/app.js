@@ -113,6 +113,9 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+const rateLimiter = require("./middlewares/rateLimiter");
+app.use(rateLimiter);
+
 // Basic security middlewares
 app.use(helmet());
 
@@ -207,6 +210,9 @@ app.use((req, res) => {
   });
 });
 
+// 🧩 Centralized Error Handler
+const errorHandler = require("./middlewares/errorHandler");
+app.use(errorHandler);
 
 // 🧩 ✅ TEMPORARY GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {

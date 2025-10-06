@@ -1,6 +1,10 @@
+/**
+ * src/routes/volunteerRoutes.js
+ */
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/auth");
+const upload = require("../middlewares/upload");
 const authorizeRoles = require("../middlewares/authorizeRoles");
 const {
   registerAsVolunteer,
@@ -8,13 +12,29 @@ const {
   listVolunteers
 } = require("../controllers/volunteerController");
 
-// User upgrades → volunteer
-router.post("/register", auth, authorizeRoles("user"), registerAsVolunteer);
+// 📸 Volunteer registration with ID proof upload
+router.post(
+  "/register",
+  auth,
+  authorizeRoles("user"),
+  upload.single("idProof"),
+  registerAsVolunteer
+);
 
-// Volunteer updates own profile
-router.patch("/update", auth, authorizeRoles("volunteer"), updateVolunteerProfile);
+// ✏️ Volunteer profile update
+router.patch(
+  "/update",
+  auth,
+  authorizeRoles("volunteer"),
+  updateVolunteerProfile
+);
 
-// Admin lists all volunteers
-router.get("/", auth, authorizeRoles("admin"), listVolunteers);
+// 👁️ Admin-only volunteer listing
+router.get(
+  "/",
+  auth,
+  authorizeRoles("admin"),
+  listVolunteers
+);
 
 module.exports = router;
